@@ -128,6 +128,28 @@
       <filtered>false</filtered>
       <fileMode>0755</fileMode>
     </fileSet>
+    <fileSet>
+      <!-- kiji-mapreduce -->
+      <useDefaultExcludes>false</useDefaultExcludes>
+      <outputDirectory>.</outputDirectory>
+      <directory>target/prereqs-dir/kiji-mapreduce-${kiji-mapreduce.version}</directory>
+      <excludes>
+        <exclude>RELEASE_NOTES.txt</exclude>
+      </excludes>
+      <filtered>false</filtered>
+      <fileMode>0644</fileMode>
+    </fileSet>
+    <fileSet>
+      <!-- kiji-mapreduce-lib -->
+      <useDefaultExcludes>false</useDefaultExcludes>
+      <outputDirectory>.</outputDirectory>
+      <directory>target/prereqs-dir/kiji-mapreduce-lib-${kiji-mapreduce-lib.version}</directory>
+      <excludes>
+        <exclude>RELEASE_NOTES.txt</exclude>
+      </excludes>
+      <filtered>false</filtered>
+      <fileMode>0644</fileMode>
+    </fileSet>
   </fileSets>
   <files>
     <!-- Mostly to move and rename release notes. -->
