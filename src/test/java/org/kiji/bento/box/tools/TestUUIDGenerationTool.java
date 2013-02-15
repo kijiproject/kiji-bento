@@ -56,7 +56,7 @@ public final class TestUUIDGenerationTool {
   }
 
   /**
-   * @return The contents of the UUID file in the temporary directory for tests.
+   * @return the contents of the UUID file in the temporary directory for tests.
    */
   private String readUUIDFile() throws IOException {
     File uuidFile = new File(mTempDir.getRoot(), UUID_FILE_NAME);

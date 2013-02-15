@@ -54,6 +54,7 @@
       <fileMode>0755</fileMode>
       <includes>
         <include>kiji-env.sh</include>
+        <include>record-usage-timestamp.sh</include>
       </includes>
     </fileSet>
     <!-- scripts used by bento-cluster for upgrade check-in. -->

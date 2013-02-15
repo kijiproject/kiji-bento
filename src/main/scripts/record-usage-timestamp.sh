@@ -17,22 +17,22 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# This script runs a Java program that randomly generates a UUID and writes that UUID to
-# the file .kiji-bento-uuid, if the file does not already exist.
+# This script runs a Java program that writes the current time in milliseconds to 
+# the file .kiji-last-used.
 
 bin=`dirname $0`
 
-# This script should be a part of a bento-cluster inside a Kiji BentoBox. 
-# The kiji-bento lib dir should be two directories above.
-kiji_bento_lib_dir="${bin}/../../lib"
+# This script should be a part of a bin dir inside a Kiji BentoBox. 
+# The kiji-bento lib dir should be one directory above.
+kiji_bento_lib_dir="${bin}/../lib"
 
-# We should log any problems with UUID generation to a file in bento-cluster's state dir.
-uuid_log_file="${bin}/../state/bento-uuid.log"
+# We should log any problems with writing the timestamp to bento-cluster's state dir.
+ts_log_file="${bin}/../cluster/state/bento-ts.log"
 
 # Everything in the kiji-bento lib dir should go on the classpath.
 tool_classpath="${kiji_bento_lib_dir}/*"
 
 # Run the tool.
-java -cp "${tool_classpath}" org.kiji.bento.box.tools.UUIDGenerationTool &> "${uuid_log_file}"
+java -cp "${tool_classpath}" org.kiji.bento.box.tools.UsageTimestampTool &> "${ts_log_file}"
 exit $?
 
