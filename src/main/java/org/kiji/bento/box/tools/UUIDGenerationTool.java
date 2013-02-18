@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
@@ -64,10 +65,13 @@ public final class UUIDGenerationTool {
   void writeUUID(File directory, UUID uuid) throws IOException {
     File uuidFile = new File(directory, UUID_FILE_NAME);
     OutputStream uuidOutputStream = null;
+    OutputStreamWriter uuidWriter = null;
     try {
       uuidOutputStream = new FileOutputStream(uuidFile);
-      IOUtils.write(uuid.toString() + "\n", uuidOutputStream);
+      uuidWriter = new OutputStreamWriter(uuidOutputStream, "UTF-8");
+      IOUtils.write(uuid.toString() + "\n", uuidWriter);
     } finally {
+      IOUtils.closeQuietly(uuidWriter);
       IOUtils.closeQuietly(uuidOutputStream);
     }
   }

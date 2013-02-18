@@ -150,9 +150,15 @@
       <classifier>release</classifier>
       <type>tar.gz</type>
     </dependency>
+
+    <!-- Dependencies used by kiji-bento java code. -->
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
     </dependency>
     <dependency>
       <groupId>log4j</groupId>
