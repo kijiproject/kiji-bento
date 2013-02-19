@@ -22,10 +22,8 @@ package org.kiji.bento.box;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -96,9 +94,7 @@ public class TestUpgradeResponse {
   public void testFromFile() throws IOException {
     LOG.info("Writing a file with upgrade response JSON.");
     File jsonFile = new File(mTempFolder.getRoot(), ".kiji-bento-upgrade");
-    FileWriter writer = new FileWriter(jsonFile);
-    IOUtils.write(TEST_JSON, writer);
-    writer.close();
+    BentoBoxUtils.writeObjectToFile(jsonFile, TEST_JSON);
 
     LOG.info("Getting and verifying an UpgradeResponse from that file content.");
     UpgradeResponse response = UpgradeResponse.fromFile(jsonFile);

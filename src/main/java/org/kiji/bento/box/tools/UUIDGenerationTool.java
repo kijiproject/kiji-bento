@@ -20,15 +20,13 @@
 package org.kiji.bento.box.tools;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.util.UUID;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.kiji.bento.box.BentoBoxUtils;
 
 /**
  * <p> A tool that generates a UUID identifying the user currently running a BentoBox.
@@ -64,16 +62,7 @@ public final class UUIDGenerationTool {
    */
   void writeUUID(File directory, UUID uuid) throws IOException {
     File uuidFile = new File(directory, UUID_FILE_NAME);
-    OutputStream uuidOutputStream = null;
-    OutputStreamWriter uuidWriter = null;
-    try {
-      uuidOutputStream = new FileOutputStream(uuidFile);
-      uuidWriter = new OutputStreamWriter(uuidOutputStream, "UTF-8");
-      IOUtils.write(uuid.toString() + "\n", uuidWriter);
-    } finally {
-      IOUtils.closeQuietly(uuidWriter);
-      IOUtils.closeQuietly(uuidOutputStream);
-    }
+    BentoBoxUtils.writeObjectToFile(uuidFile, uuid);
   }
 
   /**
@@ -106,12 +95,9 @@ public final class UUIDGenerationTool {
    * @return <code>0</code> if no errors are encountered, <code>1</code> otherwise.
    */
   public int run() {
-    String homeDirectoryPath = System.getProperty("user.home");
-    File homeDirectory = new File(homeDirectoryPath);
-    // Ensure there are no problems with the home directory.
-    if (!homeDirectory.exists() || !homeDirectory.isDirectory()) {
-      LOG.error("UUID generation failed. The following path was retrieved as the home directory, "
-          + "but it does not exist or is not a directory: " + homeDirectoryPath);
+    // Get the home directory or fail if there's a problem.
+    File homeDirectory = BentoBoxUtils.getHomeDirectory();
+    if (null == homeDirectory) {
       return 1;
     }
 

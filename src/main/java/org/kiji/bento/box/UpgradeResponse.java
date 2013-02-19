@@ -20,20 +20,13 @@
 package org.kiji.bento.box;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import org.apache.commons.io.IOUtils;
 
 /**
  * <p>Represents a response from a Kiji BentoBox upgrade server providing information on new
@@ -49,7 +42,7 @@ public final class UpgradeResponse {
 
   /** A pattern for matching against and decomposing version strings. */
   private static final Pattern VERSION_PATTERN =
-      Pattern.compile("(\\d+)\\.(\\d+)\\.(\\d+)(-rc\\d+)?");
+      Pattern.compile("(\\d+)\\.(\\d+)\\.(\\d+)(-rc\\d+)?(-SNAPSHOT)?");
 
   /** A message that can be formatted that will inform the user of a compatible upgrade. */
   private static final String COMPATIBLE_UPGRADE_MSG_FORMAT = "Version %s of Kiji BentoBox "
@@ -117,17 +110,8 @@ public final class UpgradeResponse {
    */
   public static UpgradeResponse fromFile(File file) throws IOException {
     // Read the upgrade information JSON from a file and parse.
-    InputStream upgradeInfoStream = null;
-    InputStreamReader upgradeInfoFileReader = null;
-    try {
-      upgradeInfoStream = new FileInputStream(file);
-      upgradeInfoFileReader = new InputStreamReader(upgradeInfoStream, "UTF-8");
-      String upgradeJson = IOUtils.toString(upgradeInfoFileReader);
-      return fromJSON(upgradeJson);
-    } finally {
-      IOUtils.closeQuietly(upgradeInfoFileReader);
-      IOUtils.closeQuietly(upgradeInfoStream);
-    }
+    String upgradeJson = BentoBoxUtils.readFileAsString(file);
+    return fromJSON(upgradeJson);
   }
 
   /**
@@ -150,16 +134,7 @@ public final class UpgradeResponse {
   public void write(File file) throws IOException {
     Gson gson = new Gson();
     String upgradeJson = gson.toJson(this);
-    OutputStream upgradeInfoFileOutput = null;
-    OutputStreamWriter upgradeInfoWriter = null;
-    try {
-      upgradeInfoFileOutput = new FileOutputStream(file);
-      upgradeInfoWriter = new OutputStreamWriter(upgradeInfoFileOutput, "UTF-8");
-      IOUtils.write(upgradeJson, upgradeInfoWriter);
-    } finally {
-      IOUtils.closeQuietly(upgradeInfoWriter);
-      IOUtils.closeQuietly(upgradeInfoFileOutput);
-    }
+    BentoBoxUtils.writeObjectToFile(file, upgradeJson);
   }
 
   /**

@@ -20,14 +20,12 @@
 package org.kiji.bento.box.tools;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.kiji.bento.box.BentoBoxUtils;
 
 /**
  * <p>A tool that writes the last timestamp the <code>kiji</code> script within a BentoBox was
@@ -51,16 +49,7 @@ public final class UsageTimestampTool {
    */
   void writeTimestamp(File directory, Long timestamp) throws IOException {
     File timestampFile = new File(directory, TIMESTAMP_FILE_NAME);
-    OutputStream timestampOutputStream = null;
-    OutputStreamWriter timestampWriter = null;
-    try {
-      timestampOutputStream = new FileOutputStream(timestampFile);
-      timestampWriter = new OutputStreamWriter(timestampOutputStream, "UTF-8");
-      IOUtils.write(timestamp.toString() + "\n", timestampWriter);
-    } finally {
-      IOUtils.closeQuietly(timestampWriter);
-      IOUtils.closeQuietly(timestampOutputStream);
-    }
+    BentoBoxUtils.writeObjectToFile(timestampFile, timestamp);
   }
 
   /**
@@ -90,12 +79,9 @@ public final class UsageTimestampTool {
    * @return <code>0</code> if no errors are encountered, <code>1</code> otherwise.
    */
   public int run() {
-    String homeDirectoryPath = System.getProperty("user.home");
-    File homeDirectory = new File(homeDirectoryPath);
-    // Ensure there are no problems with the home directory.
-    if (!homeDirectory.exists() || !homeDirectory.isDirectory()) {
-      LOG.error("Usage timestamp recording failed. The following path was retrieved as the home "
-          + "directory, but it does not exist or is not a directory: " + homeDirectoryPath);
+    // Get the home directory and fail if there's a problem.
+    File homeDirectory = BentoBoxUtils.getHomeDirectory();
+    if (null == homeDirectory) {
       return 1;
     }
 

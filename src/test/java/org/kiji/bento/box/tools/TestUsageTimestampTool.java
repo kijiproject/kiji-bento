@@ -22,17 +22,16 @@ package org.kiji.bento.box.tools;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.kiji.bento.box.BentoBoxUtils;
 
 /**
  * Unit tests for the functionality of {@link org.kiji.bento.box.tools.TestUsageTimestampTool}.
@@ -59,13 +58,7 @@ public final class TestUsageTimestampTool {
    */
   private Long readTimestampFile() throws IOException {
     File timestampFile = new File(mTempDir.getRoot(), TIMESTAMP_FILE_NAME);
-    Reader reader = null;
-    try {
-      reader = new FileReader(timestampFile);
-      return Long.parseLong(IOUtils.toString(reader).trim());
-    } finally {
-      reader.close();
-    }
+    return Long.parseLong(BentoBoxUtils.readFileAsString(timestampFile).trim());
   }
 
   /**

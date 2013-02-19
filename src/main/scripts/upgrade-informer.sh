@@ -17,8 +17,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# This script runs a Java program that writes the current time in milliseconds to 
-# the file .kiji-last-used.
+# This script runs a Java program that looks in the file .kiji-bento-upgrade in
+# the state directory of the bento cluster included with a Kiji BentoBox for upgrade
+# information. If the file exists and contains relevant upgrade information, a reminder
+# about the upgrade will be displayed to the user. The frequency with which the user
+# is reminded of upgrades can be configured with an argument to the Java program.
 
 function create_missing_dir() {
   dirname=$1
@@ -35,21 +38,30 @@ function create_missing_dir() {
 
 bin=`dirname $0`
 
-# This script should be a part of a bin dir inside a Kiji BentoBox. 
-# The kiji-bento lib dir should be one directory above, along with
-# the conf dir containing log4j properties.
+# This script should be in the bin directory of a Kiji BentoBox.
+# The Kiji BentoBox lib directory should be one directory above,
+# as should the conf dir that contains log4j configuration.
 kiji_bento_lib_dir="${bin}/../lib"
 kiji_bento_conf_dir="${bin}/../conf"
 
-# We should log any problems with writing the timestamp to bento-cluster's state dir.
+# We'll look for the update file in bento-cluster's state dir. We'll also log
+# any output from the Java tool to a file in that directory.
 bento_cluster_state_dir="${bin}/../cluster/state"
 $(create_missing_dir "${bento_cluster_state_dir}")
-ts_log_file="${bento_cluster_state_dir}/bento-ts.log"
+upgrade_informer_log_file="${bento_cluster_state_dir}/bento-upgrade-informer.log"
 
 # Everything in the kiji-bento lib dir should go on the classpath.
 tool_classpath="${kiji_bento_lib_dir}/*"
 
-# Run the tool.
-java -cp "${tool_classpath}:${kiji_bento_conf_dir}" org.kiji.bento.box.tools.UsageTimestampTool &> "${ts_log_file}"
+# We'll remind the user every 24 hours of upgrades.
+let "reminder_period_millis=24*60*60*1000"
+
+# Run the tool. Only standard error is redirected to a log file, standard out still
+# goes to console so we can easily display upgrade messages to the user.
+java -cp "${tool_classpath}:${kiji_bento_conf_dir}" org.kiji.bento.box.tools.UpgradeInformerTool \
+  "--input-dir=${bento_cluster_state_dir}" \
+  "--reminder-period-millis=${reminder_period_millis}" \
+  2> "${upgrade_informer_log_file}"
+
 exit $?
 

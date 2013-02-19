@@ -22,18 +22,17 @@ package org.kiji.bento.box.tools;
 import static org.junit.Assert.*;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.UUID;
 
-import org.apache.commons.io.IOUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.kiji.bento.box.BentoBoxUtils;
 
 /**
  * Unit tests for the functionality of {@link UUIDGenerationTool}.
@@ -60,13 +59,7 @@ public final class TestUUIDGenerationTool {
    */
   private String readUUIDFile() throws IOException {
     File uuidFile = new File(mTempDir.getRoot(), UUID_FILE_NAME);
-    Reader reader = null;
-    try {
-      reader = new FileReader(uuidFile);
-      return IOUtils.toString(reader).trim();
-    } finally {
-      reader.close();
-    }
+    return BentoBoxUtils.readFileAsString(uuidFile).trim();
   }
 
   /**
