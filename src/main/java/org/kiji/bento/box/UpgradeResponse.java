@@ -36,7 +36,8 @@ import com.google.gson.annotations.SerializedName;
  *
  * <p>Instances of this class can be obtained using a JSON record (such as when a response from the
  * upgrade server is obtained), or a file containing a JSON record (such as when the local kiji
- * script wishes to inform the user of an upgrade).
+ * script wishes to inform the user of an upgrade). The methods {@link #fromJSON(String)} and
+ * {@link #fromFile(java.io.File)} can be used to get instances in these ways.
  */
 public final class UpgradeResponse {
 

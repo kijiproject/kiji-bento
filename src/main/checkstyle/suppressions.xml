@@ -34,6 +34,12 @@
   <!-- Nested blocks used to structure tests. -->
   <suppress checks="AvoidNestedBlocks" files="src/test/java/"/>
 
+  <!-- 
+    Want to draw attention to the fact that certain runtime exceptions can be thrown in this
+    class.
+  -->
+  <suppress checks="RedundantThrowsCheck" files="src/main/java/org/kiji/bento/box/UpgradeCheckin.java"/>
+
   <!-- Don't worry about checkstyle on apache foundation code. -->
   <suppress checks=".*" files="src/main/java/org/apache/"/>
 </suppressions>
