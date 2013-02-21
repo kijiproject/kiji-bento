@@ -97,4 +97,25 @@ public class TestUpgradeCheckin {
     assertEquals("Bad JSON serialization of check-in message.", getExpectedJSON(),
         checkin.toJSON());
   }
+
+  @Test
+  public void testEquals() throws IOException {
+    LOG.info("Testing equals with two identical messages.");
+    UpgradeCheckin checkin1 = new UpgradeCheckin.Builder()
+        .withId("hello")
+        .withLastUsedMillis(1L)
+        .build();
+    UpgradeCheckin checkin2 = new UpgradeCheckin.Builder()
+        .withId("hello")
+        .withLastUsedMillis(1L)
+        .build();
+    assertTrue("These two check-in messages should have been equal.", checkin1.equals(checkin2));
+    LOG.info("Testing equals with unidentical messages.");
+    UpgradeCheckin checkin3 = new UpgradeCheckin.Builder()
+        .withId("goodbye")
+        .withLastUsedMillis(1L)
+        .build();
+    assertFalse("These two check-in messages should have been unequal.",
+        checkin1.equals(checkin3));
+  }
 }

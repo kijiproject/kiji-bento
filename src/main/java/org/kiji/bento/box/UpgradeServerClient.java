@@ -39,9 +39,10 @@ import org.apache.http.util.EntityUtils;
  *
  * Instance of this class are created using an instance of {@link HttpClient}. While the method
  * {@link #checkin(UpgradeCheckin)} will release any resources created for an individual request,
- * clients must close the underlying {@link HttpClient} when it is no longer needed.
+ * clients must close the underlying {@link HttpClient} when it is no longer needed by calling
+ * {@link #close()}.
  */
-public final class UpgradeServerClient {
+public class UpgradeServerClient {
 
   /** The http client to use when making requests. */
   private final HttpClient mHttpClient;
@@ -54,7 +55,7 @@ public final class UpgradeServerClient {
    * @param httpClient will be used to make http requests.
    * @param checkinServerURI where requests will be sent.
    */
-  private UpgradeServerClient(HttpClient httpClient, URI checkinServerURI) {
+  UpgradeServerClient(HttpClient httpClient, URI checkinServerURI) {
     mHttpClient = httpClient;
     mCheckinServerURI = checkinServerURI;
   }
@@ -98,5 +99,19 @@ public final class UpgradeServerClient {
     } finally {
       postRequest.releaseConnection();
     }
+  }
+
+  /**
+   * @return the URI of the upgrade server check-in messages are sent to.
+   */
+  public URI getServerURI() {
+    return mCheckinServerURI;
+  }
+
+  /**
+   * Closes resources (specifically the http client) used by this instance.
+   */
+  public void close() {
+    mHttpClient.getConnectionManager().shutdown();
   }
 }

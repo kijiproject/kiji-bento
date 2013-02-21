@@ -171,6 +171,10 @@
       <scope>compile</scope>
     </dependency>
     <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+    </dependency>
+    <dependency>
       <groupId>org.kiji.common</groupId>
       <artifactId>kiji-common-flags</artifactId>
     </dependency>

@@ -25,6 +25,7 @@ import java.io.IOException;
 
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 
 /**
  * <p>Represents a check-in message that can be sent to a Kiji BentoBox upgrade server. A check-in
@@ -103,6 +104,36 @@ public final class UpgradeCheckin {
     return gson.toJson(this);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public boolean equals(Object other) {
+    if (!(other instanceof UpgradeCheckin)) {
+      return false;
+    }
+    UpgradeCheckin that = (UpgradeCheckin) other;
+    return mType.equals(that.getType())
+        && mFormat.equals(that.getFormat())
+        && mOperatingSystem.equals(that.getOperatingSystem())
+        && mBentoVersion.equals(that.getBentoVersion())
+        && mJavaVersion.equals(that.getJavaVersion())
+        && mLastUsedMillis == that.getLastUsedMillis()
+        && mId.equals(that.getId());
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public int hashCode() {
+    return new HashCodeBuilder()
+        .append(mType)
+        .append(mFormat)
+        .append(mOperatingSystem)
+        .append(mBentoVersion)
+        .append(mJavaVersion)
+        .append(mLastUsedMillis)
+        .append(mId)
+        .toHashCode();
+  }
+
   /**
    * @return the type of this message.
    */
@@ -111,7 +142,7 @@ public final class UpgradeCheckin {
   }
 
   /**
-   * @return the format version for this version.
+   * @return the format version for this message.
    */
   public String getFormat() {
     return mFormat;
