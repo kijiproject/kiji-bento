@@ -165,6 +165,12 @@
       <artifactId>guava</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>4.2.3</version>
+      <scope>compile</scope>
+    </dependency>
+    <dependency>
       <groupId>org.kiji.common</groupId>
       <artifactId>kiji-common-flags</artifactId>
     </dependency>
@@ -183,6 +189,10 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.easymock</groupId>
+      <artifactId>easymock</artifactId>
     </dependency>
   </dependencies>
 
