@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 #
 #   (c) Copyright 2013 WibiData, Inc.
-#  
+#
 #   See the NOTICE file distributed with this work for additional
 #   information regarding copyright ownership.
-#  
+#
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
 #   You may obtain a copy of the License at
-#  
+#
 #       http://www.apache.org/licenses/LICENSE-2.0
-#  
+#
 #   Unless required by applicable law or agreed to in writing, software
 #   distributed under the License is distributed on an "AS IS" BASIS,
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -35,8 +35,8 @@ function create_missing_dir() {
 
 bin=`dirname $0`
 
-# This script should be a part of a bento-cluster inside a Kiji BentoBox. 
-# The kiji-bento lib dir should be two directories above, along with the 
+# This script should be a part of a bento-cluster inside a Kiji BentoBox.
+# The kiji-bento lib dir should be two directories above, along with the
 # conf dir containing log4j properties.
 kiji_bento_lib_dir="${bin}/../../lib"
 kiji_bento_conf_dir="${bin}/../../conf"

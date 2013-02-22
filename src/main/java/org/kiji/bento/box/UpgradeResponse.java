@@ -261,7 +261,7 @@ public final class UpgradeResponse {
    *     specified version, <code>false</code> otherwise.
    */
   public boolean isLatestNewer(String version) {
-    return isVersionNewer(mLatestVersion, version);
+    return null == mLatestVersion ? false : isVersionNewer(mLatestVersion, version);
   }
 
   /**
@@ -295,10 +295,15 @@ public final class UpgradeResponse {
    * specified and if there is a difference between the two versions.
    *
    * @param currentVersion of the software to use when creating the upgrade message.
-   * @return the message to display to the user reminding them of an upgrade, or the emtpy string
+   * @return the message to display to the user reminding them of an upgrade, or the empty string
    *     if no versions in this upgrade info are relevant to the version specified.
    */
   public String getUpgradeReminder(String currentVersion) {
+    // If both versions are missing, we're looking at a response with no upgrade.
+    if (null == mLatestVersion && null == mCompatibleVersion) {
+      return "";
+    }
+
     if (null == mCompatibleVersion) {
       // There is only a latest version, and it is incompatible. Is it relevant?
       if (isLatestNewer(currentVersion)) {
@@ -325,14 +330,15 @@ public final class UpgradeResponse {
       if (isCompatibleNewer(currentVersion) && isLatestNewer(currentVersion)) {
         // Both versions are relevant upgrades.
         message.append(String.format(COMPATIBLE_UPGRADE_MSG_FORMAT, mCompatibleVersion,
-            currentVersion, mCompatibleVersionURL.toString(), "\n"));
+            currentVersion, mCompatibleVersionURL.toString(), mMessage));
+        message.append("\n");
         message.append(String.format(INCOMPATIBLE_UPGRADE_MSG_FORMAT, mLatestVersion,
-            currentVersion, mLatestVersionURL.toString(), mMessage));
+            currentVersion, mLatestVersionURL.toString(), ""));
       } else if (isLatestNewer(currentVersion)) {
         // Only the latest version is a relevant upgrade and compatible version must be out of
         // date.
         message.append(String.format(INCOMPATIBLE_UPGRADE_MSG_FORMAT, mLatestVersion,
-            currentVersion, mLatestVersionURL.toString(), mMessage));
+            currentVersion, mLatestVersionURL.toString(), ""));
       }
       // If we fall through without executing either of the above clauses, neither upgrade is
       // relevant and we're returning the empty string.
