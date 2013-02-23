@@ -48,6 +48,10 @@ public final class BentoBoxUtils {
    */
   public static File getHomeDirectory() {
     String homeDirectoryPath = System.getProperty("user.home");
+    if (null == homeDirectoryPath || homeDirectoryPath.isEmpty()) {
+      LOG.error("Retrieved a null or empty-string value for home directory.");
+      return null;
+    }
     File homeDirectory = new File(homeDirectoryPath);
     // Ensure there are no problems with the home directory.
     if (!homeDirectory.exists() || !homeDirectory.isDirectory()) {

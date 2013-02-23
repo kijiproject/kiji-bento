@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * A thread that periodically sends check-in messages to a BentoBox upgrade server, and writes
  * the information contained in responses to a file on the local machine.
  */
-public class CheckinThread extends Thread {
+public final class CheckinThread extends Thread {
 
   private static final Logger LOG = LoggerFactory.getLogger(CheckinThread.class);
 

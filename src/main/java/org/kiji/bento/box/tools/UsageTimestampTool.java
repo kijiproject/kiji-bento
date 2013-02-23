@@ -31,7 +31,7 @@ import org.kiji.bento.box.BentoBoxUtils;
  * <p>A tool that writes the last timestamp the <code>kiji</code> script within a BentoBox was
  * used. The tool will write the current time in milliseconds since the Unix epoch in a file
  * named <code>.kiji-last-used</code> in the user's home directory. If the file already exists,
- * it will be overwritten.
+ * it will be overwritten.</p>
  */
 public final class UsageTimestampTool {
   private static final Logger LOG = LoggerFactory.getLogger(UsageTimestampTool.class);

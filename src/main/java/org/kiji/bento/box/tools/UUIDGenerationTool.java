@@ -32,7 +32,7 @@ import org.kiji.bento.box.BentoBoxUtils;
  * <p> A tool that generates a UUID identifying the user currently running a BentoBox.
  * The tool will check the user's home directory for a file named <code>.kiji-bento-uuid</code>.
  * If the file exists, nothing will be done. If not, a new UUID will be generated and written
- * to that file.
+ * to that file.</p>
  */
 public final class UUIDGenerationTool {
   private static final Logger LOG = LoggerFactory.getLogger(UUIDGenerationTool.class);

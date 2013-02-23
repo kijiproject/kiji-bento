@@ -32,7 +32,9 @@
       <resource>
         <directory>src/main/resources</directory>
         <filtering>true</filtering>
-        <includes><include>org/kiji/bento/box/kiji-bento.properties</include></includes>
+        <includes>
+          <include>org/kiji/bento/box/kiji-bento.properties</include>
+        </includes>
       </resource>
       <!-- Copy all other resources without filtering. -->
       <resource>

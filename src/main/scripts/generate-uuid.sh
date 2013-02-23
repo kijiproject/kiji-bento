@@ -21,7 +21,7 @@
 # the file .kiji-bento-uuid, if the file does not already exist.
 
 function create_missing_dir() {
-  dirname=$1
+  dirname="$1"
 
   # Create the directory identified if it does not exist already.
   if [ ! -z "$dirname" -a ! -d "$dirname" ]; then
@@ -29,7 +29,7 @@ function create_missing_dir() {
       echo "Warning: $dirname exists but is not a directory"
       return 1
     fi
-    mkdir -p $dirname
+    mkdir -p "$dirname"
   fi
 }
 
@@ -51,5 +51,4 @@ tool_classpath="${kiji_bento_lib_dir}/*"
 
 # Run the tool.
 java -cp "${tool_classpath}:${kiji_bento_conf_dir}" org.kiji.bento.box.tools.UUIDGenerationTool &> "${uuid_log_file}"
-exit $?
 

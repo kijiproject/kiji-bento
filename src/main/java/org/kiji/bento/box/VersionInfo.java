@@ -26,7 +26,8 @@ import java.util.Properties;
 import org.apache.commons.io.IOUtils;
 
 /**
- * <p>Provides a static method that can be used to obtain the version of Kiji BentoBox being run.
+ * <p>Provides a static method that can be used to obtain the version of Kiji BentoBox being
+ * run.</p>
  *
  * <p>The version of the Kiji BentoBox is determined using one of the following methods (used in
  * the order in which they are tried).
@@ -38,6 +39,7 @@ import org.apache.commons.io.IOUtils;
  *   since if the above two methods fail, we must be in a non-released development version or
  *   some other problem has occurred.</li>
  * </ol>
+ * </p>
  */
 public final class VersionInfo {
 

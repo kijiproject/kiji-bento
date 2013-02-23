@@ -35,20 +35,20 @@ import org.kiji.common.flags.FlagParser;
  * about an available upgrade is taken from a file named <code>.kiji-bento-upgrade</code> assumed
  * to be in the directory specified by the command-line flag <code>--input-dir</code>. The period
  * between upgrade reminders can be configured with the command-line flag
- * <code>--reminder-period-millis</code>.
+ * <code>--reminder-period-millis</code>.</p>
  *
  * <p>The tool will check for an upgrade information file in the directory specified. This file
  * will contain a JSON representation of information for an upgrade,
  * which also includes a timestamp of the last time the user was reminded of the upgrade. If it
  * is time for an upgrade (as determined using the reminder timestamp in the JSON and the
  * reminder period specified) the user will be reminded, and the upgrade information file will be
- * rewritten with an updated timestamp.
+ * rewritten with an updated timestamp.</p>
  *
  * <p>This tool is resilient to stale upgrade files, in that if the upgrade file contains
  * information for a version not greater than the current version, the user will not be reminded.
  * This tool also swallows and logs any {@link Exception} encountered while running. Clients of
  * this tool should ensure that logs are redirected to an appropriate location to ensure that
- * users are not unnecessarily bothered.
+ * users are not unnecessarily bothered.</p>
  */
 public final class UpgradeInformerTool {
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeInformerTool.class);

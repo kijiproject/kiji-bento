@@ -24,7 +24,7 @@
 # is reminded of upgrades can be configured with an argument to the Java program.
 
 function create_missing_dir() {
-  dirname=$1
+  dirname="$1"
 
   # Create the directory identified if it does not exist already.
   if [ ! -z "$dirname" -a ! -d "$dirname" ]; then
@@ -32,7 +32,7 @@ function create_missing_dir() {
       echo "Warning: $dirname exists but is not a directory"
       return 1
     fi
-    mkdir -p $dirname
+    mkdir -p "$dirname"
   fi
 }
 
@@ -62,6 +62,4 @@ java -cp "${tool_classpath}:${kiji_bento_conf_dir}" org.kiji.bento.box.tools.Upg
   "--input-dir=${bento_cluster_state_dir}" \
   "--reminder-period-millis=${reminder_period_millis}" \
   2> "${upgrade_informer_log_file}"
-
-exit $?
 

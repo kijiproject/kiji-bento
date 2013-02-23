@@ -21,7 +21,7 @@
 #  BentoBox upgrade server.
 
 function create_missing_dir() {
-  dirname=$1
+  dirname="$1"
 
   # Create the directory identified if it does not exist already.
   if [ ! -z "$dirname" -a ! -d "$dirname" ]; then
@@ -29,7 +29,7 @@ function create_missing_dir() {
       echo "Warning: $dirname exists but is not a directory"
       return 1
     fi
-    mkdir -p $dirname
+    mkdir -p "$dirname"
   fi
 }
 
@@ -87,8 +87,7 @@ nohup java -cp "${tool_classpath}:${kiji_bento_conf_dir}" \
   "--state-dir=${bento_cluster_state_dir}" \
   "--checkin-period-millis=${checkin_period_millis}" \
   "--upgrade-server-url=${BENTO_CHECKIN_SERVER}" \
-  &> "${upgrade_daemon_log_file}" &
+  &> "${upgrade_daemon_log_file}" < /dev/null &
 
 wait_daemon_started
-exit $?
 

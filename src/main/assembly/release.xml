@@ -247,6 +247,7 @@
         <exclude>org.kiji.mapreduce</exclude>
         <exclude>org.kiji.bento:bento-cluster</exclude>
         <exclude>org.kiji.examples.phonebook</exclude>
+        <exclude>org.kiji.examples.music</exclude>
       </excludes>
     </dependencySet>
   </dependencySets>

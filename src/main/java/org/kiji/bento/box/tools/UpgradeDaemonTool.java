@@ -37,15 +37,15 @@ import org.kiji.common.flags.FlagParser;
 
 /**
  * <p>A tool that launches a thread that periodically checks-in with the upgrade server, then
- * waits for that thread to complete before terminating.
+ * waits for that thread to complete before terminating.</p>
  *
  * <p>This tool expects file recording the usage of the kiji script and a UUID for the user to be
  * located in the user's home directory. It also expects to write upgrade information to a file
- * in bento cluster's state directory.
+ * in bento cluster's state directory.</p>
  *
  * <p>This tool will write a PID file to bento cluster's state directory. A shutdown hook is also
  * installed so that the thread performing check-ins is gracefully shutdown when the SIGTERM
- * signal is received. The method used to obtain PIDs is not portable to non-Unix systems.
+ * signal is received. The method used to obtain PIDs is not portable to non-Unix systems.</p>
  */
 public final class UpgradeDaemonTool {
   private static final Logger LOG = LoggerFactory.getLogger(UpgradeDaemonTool.class);
@@ -72,6 +72,7 @@ public final class UpgradeDaemonTool {
 
   @Flag(name = "checkin-period-millis",
       usage = "The number of milliseconds between check-ins with the upgrade server.")
+  // By default, check-in daily.
   private long mCheckinPeriodMillis = 24 * 60 * 60 * 1000;
 
   @Flag(name = "upgrade-server-url",

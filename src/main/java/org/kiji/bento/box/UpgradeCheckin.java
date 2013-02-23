@@ -33,9 +33,10 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
  * a unique identifier for the user of Kiji BentoBox, and the last time the <code>kiji</code>
  * script included with the distribution was used. Check-in messages are periodically sent to the
  * upgrade server both so it can track usage information and as a means of requesting information
- * on new, available updates.
+ * on new, available updates.</p>
  *
- * <p>And now I explain how you get one of these things and how you transform it into JSON.
+ * <p>To create a check-in message, use {@link UpgradeCheckin.Builder}. A message can be
+ * transformed to JSON by calling {@link #toJSON()}.</p>
  */
 public final class UpgradeCheckin {
 
@@ -71,27 +72,18 @@ public final class UpgradeCheckin {
   private final String mId;
 
   /**
-   * Constructs a new check-in message that will contain the specified values. Clients cannot use
-   * this constructor and should instead use a {@link Builder} to create a check-in message.
+   * Constructs a new check-in message using values in the specified builder.
    *
-   * @param type of message being sent.
-   * @param format contains a version for the message format itself.
-   * @param operatingSystem in use by the client sending the message.
-   * @param bentoVersion in use by the client sending the message.
-   * @param javaVersion in use by the client sending the message.
-   * @param lastUsedMillis is the unix time, in milliseconds, of the last usage of the
-   *     <code>kiji</code> script included with BentoBox.
-   * @param id that is unique and anonymous for the client sending the message.
+   * @param builder to obtain message values from.
    */
-  private UpgradeCheckin(String type, String format, String operatingSystem,
-      String bentoVersion, String javaVersion, long lastUsedMillis, String id) {
-    mType = type;
-    mFormat = format;
-    mOperatingSystem = operatingSystem;
-    mBentoVersion = bentoVersion;
-    mJavaVersion = javaVersion;
-    mLastUsedMillis = lastUsedMillis;
-    mId = id;
+  private UpgradeCheckin(Builder builder) {
+    mType = builder.mType;
+    mFormat = builder.mFormat;
+    mOperatingSystem = builder.mOperatingSystem;
+    mBentoVersion = builder.mBentoVersion;
+    mJavaVersion = builder.mJavaVersion;
+    mLastUsedMillis = builder.mLastUsedMillis;
+    mId = builder.mId;
   }
 
   /**
@@ -189,13 +181,13 @@ public final class UpgradeCheckin {
    * methods of this builder to configure message parameters, and then call {@link #build()} to
    * obtain an instance of {@link UpgradeCheckin} with content equivalent to the values
    * configured. It is an error to attempt to obtain an instance with {@link #build()} without
-   * first supplying all content for the messsage.
+   * first supplying all content for the messsage.</p>
    *
    * <p>This builder will only create check-in messages with type <code>checkversion</code> and
    * format <code>bento-checkin-1.0.0</code>. Furthermore, operating system, bento version,
    * and java version information included in the check-in message will be set by this builder
    * using {@link System#getProperties()}. Clients should only need to set the user id and last
-   * usage timestamp of the message through the builder to create a new check-in message.
+   * usage timestamp of the message through the builder to create a new check-in message.</p>
    */
   public static class Builder {
     /** The type of message created by this builder. */
@@ -203,6 +195,12 @@ public final class UpgradeCheckin {
 
     /** The format of messages created by this builder. */
     private static final String MESSAGE_FORMAT = "bento-checkin-1.0.0";
+
+    /** Type of message built. */
+    private String mType;
+
+    /** Format of message being built. */
+    private String mFormat;
 
     /**
      * The usage timestamp for the <code>kiji</code> command to include in the built check-in
@@ -212,6 +210,15 @@ public final class UpgradeCheckin {
 
     /** The unique and anonymous user identifier to include with the message. */
     private String mId;
+
+    /** Operating system identifier. */
+    private String mOperatingSystem;
+
+    /** Version of Kiji BentoBox in use. */
+    private String mBentoVersion;
+
+    /** Java version in use. */
+    private String mJavaVersion;
 
     /**
      * Configures this builder to create a check-in message using the specified value for the
@@ -290,11 +297,12 @@ public final class UpgradeCheckin {
       checkNotNull(mLastUsedMillis, "Last usage timestamp for kiji script not supplied to "
           + "check-in message builder.");
       // Get other message parameters using system properties.
-      String operatingSystem = getOperatingSystem();
-      String bentoVersion = VersionInfo.getSoftwareVersion();
-      String javaVersion = getSystemProperty("java.version");
-      return new UpgradeCheckin(MESSAGE_TYPE, MESSAGE_FORMAT, operatingSystem, bentoVersion,
-          javaVersion, mLastUsedMillis, mId);
+      mType = MESSAGE_TYPE;
+      mFormat = MESSAGE_FORMAT;
+      mOperatingSystem = getOperatingSystem();
+      mBentoVersion = VersionInfo.getSoftwareVersion();
+      mJavaVersion = getSystemProperty("java.version");
+      return new UpgradeCheckin(this);
     }
   }
 }

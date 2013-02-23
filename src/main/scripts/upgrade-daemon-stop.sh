@@ -49,7 +49,7 @@ while [ "$tries" -gt 0 ]; do
   fi
   sleep 2
 done
-ps e | grep "^$PID" 2>&1 > /dev/null
+ps e | grep "^$PID " 2>&1 > /dev/null
 ret=$?
 if [ "$ret" == 0 ]; then
   echo "Kill signal sent but waiting for upgrade check-in daemon to stop timed out after 30 seconds!."
@@ -57,5 +57,4 @@ if [ "$ret" == 0 ]; then
 fi
 # upgrade check-in daemon will delete its own pid file.
 #echo "upgrade check-in daemon shutdown."
-exit 0
 

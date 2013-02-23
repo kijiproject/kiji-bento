@@ -19,6 +19,7 @@
 
 package org.kiji.bento.box;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
 
@@ -31,18 +32,18 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 
 /**
- * Client for sending check-in messages to the BentoBox upgrade server. Use the static method
+ * <p>Client for sending check-in messages to the BentoBox upgrade server. Use the static method
  * {@link #create(org.apache.http.client.HttpClient, java.net.URI)} to obtain an instance that
  * can communicate with a particular upgrade server. Then, use the method
  * {@link #checkin(UpgradeCheckin)} to send a check-in message to the upgrade server and receive
- * a response.
+ * a response.</p>
  *
- * Instance of this class are created using an instance of {@link HttpClient}. While the method
+ * <p>Instance of this class are created using an instance of {@link HttpClient}. While the method
  * {@link #checkin(UpgradeCheckin)} will release any resources created for an individual request,
  * clients must close the underlying {@link HttpClient} when it is no longer needed by calling
- * {@link #close()}.
+ * {@link #close()}.</p>
  */
-public class UpgradeServerClient {
+public class UpgradeServerClient implements Closeable {
 
   /** The http client to use when making requests. */
   private final HttpClient mHttpClient;
