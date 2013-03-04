@@ -2,29 +2,18 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.kiji.kiji-bento</groupId>
-  <artifactId>kiji-bento</artifactId>
-  <version>1.0.0-rc5-SNAPSHOT</version>
+  <artifactId>bento-checkin</artifactId>
   <packaging>jar</packaging>
 
   <parent>
-    <groupId>org.kiji.pom</groupId>
-    <artifactId>root-pom</artifactId>
-    <version>1.0.4-SNAPSHOT</version>
+    <groupId>org.kiji.kiji-bento</groupId>
+    <artifactId>kiji-bento-root</artifactId>
+    <version>1.0.0-rc5-SNAPSHOT</version>
   </parent>
 
-  <name>kiji-bento</name>
-  <description>Standalone "BentoBox" developer distribution of Kiji.</description>
+  <name>bento-checkin</name>
+  <description>Code used to check-in with an upgrade server and inform user of upgrades.</description>
   <inceptionYear>2012</inceptionYear>
-
-  <properties>
-    <bento-cluster.version>1.0.0-rc5-SNAPSHOT</bento-cluster.version>
-    <kiji-schema.version>1.0.0-rc5-SNAPSHOT</kiji-schema.version>
-    <kiji-schema-shell.version>1.0.0-rc5-SNAPSHOT</kiji-schema-shell.version>
-    <kiji-phonebook.version>1.0.0-rc5-SNAPSHOT</kiji-phonebook.version>
-    <kiji-mapreduce.version>1.0.0-rc5-SNAPSHOT</kiji-mapreduce.version>
-    <kiji-mapreduce-lib.version>1.0.0-rc5-SNAPSHOT</kiji-mapreduce-lib.version>
-    <kiji-music.version>1.0.0-rc5-SNAPSHOT</kiji-music.version>
-  </properties>
 
   <build>
     <resources>
@@ -47,34 +36,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>pre-release-requirements</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${basedir}/src/main/assembly/pre-release-requirements.xml</descriptor>
-              </descriptors>
-              <attach>false</attach>
-              <finalName>prereqs</finalName>
-            </configuration>
-          </execution>
-          <execution>
-            <id>make-assembly</id>
-            <phase>package</phase>
-            <goals>
-              <goal>single</goal>
-            </goals>
-            <configuration>
-              <descriptors>
-                <descriptor>${basedir}/src/main/assembly/release.xml</descriptor>
-              </descriptors>
-            </configuration>
-          </execution>
-        </executions>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -101,59 +62,6 @@
   </build>
 
   <dependencies>
-    <!-- Kiji project dependencies -->
-
-    <dependency>
-      <groupId>org.kiji.examples.music</groupId>
-      <artifactId>kiji-music</artifactId>
-      <version>${kiji-music.version}</version>
-      <classifier>release</classifier>
-      <type>tar.gz</type>
-    </dependency>
-    <dependency>
-      <groupId>org.kiji.examples.phonebook</groupId>
-      <artifactId>kiji-phonebook</artifactId>
-      <version>${kiji-phonebook.version}</version>
-      <classifier>release</classifier>
-      <type>tar.gz</type>
-    </dependency>
-    <dependency>
-      <groupId>org.kiji.schema</groupId>
-      <artifactId>kiji-schema</artifactId>
-      <version>${kiji-schema.version}</version>
-      <classifier>release</classifier>
-      <type>tar.gz</type>
-    </dependency>
-    <dependency>
-      <groupId>org.kiji.schema-shell</groupId>
-      <artifactId>kiji-schema-shell</artifactId>
-      <version>${kiji-schema-shell.version}</version>
-      <classifier>release</classifier>
-      <type>tar.gz</type>
-    </dependency>
-    <dependency>
-      <groupId>org.kiji.bento</groupId>
-      <artifactId>bento-cluster</artifactId>
-      <version>${bento-cluster.version}</version>
-      <classifier>release</classifier>
-      <type>tar.gz</type>
-    </dependency>
-    <dependency>
-      <groupId>org.kiji.mapreduce</groupId>
-      <artifactId>kiji-mapreduce</artifactId>
-      <version>${kiji-mapreduce.version}</version>
-      <classifier>release</classifier>
-      <type>tar.gz</type>
-    </dependency>
-    <dependency>
-      <groupId>org.kiji.mapreduce.lib</groupId>
-      <artifactId>kiji-mapreduce-lib</artifactId>
-      <version>${kiji-mapreduce-lib.version}</version>
-      <classifier>release</classifier>
-      <type>tar.gz</type>
-    </dependency>
-
-    <!-- Dependencies used by kiji-bento java code. -->
     <dependency>
       <groupId>org.apache.hadoop</groupId>
       <artifactId>hadoop-core</artifactId>
@@ -171,6 +79,10 @@
       <artifactId>httpclient</artifactId>
       <version>4.2.3</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>commons-io</groupId>
+      <artifactId>commons-io</artifactId>
     </dependency>
     <dependency>
       <groupId>commons-lang</groupId>
@@ -201,18 +113,5 @@
       <artifactId>easymock</artifactId>
     </dependency>
   </dependencies>
-
-  <repositories>
-    <repository>
-      <id>kiji-repos</id>
-      <name>kiji-repos</name>
-      <url>https://repo.wibidata.com/artifactory/kiji</url>
-    </repository>
-    <repository>
-      <id>kiji-nightly</id>
-      <name>kiji-nightly</name>
-      <url>https://repo.wibidata.com/artifactory/kiji-nightly</url>
-    </repository>
-  </repositories>
 
 </project>
