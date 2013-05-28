@@ -2,8 +2,11 @@
 
                               Kiji BentoBox Release Notes
 
-Version 1.0.4
+Version 1.0.5
   * BENTO-34. Include KijiExpress's example project.
+
+Version 1.0.4
+  * Include KijiREST.
 
 Version 1.0.3
   * BENTO-31. Fixes error copying configuration files in "bento upgrade".
