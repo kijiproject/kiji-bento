@@ -1,0 +1,687 @@
+#!/usr/bin/env bash
+#
+#   (c) Copyright 2012 WibiData, Inc.
+#
+#   See the NOTICE file distributed with this work for additional
+#   information regarding copyright ownership.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+#
+#   The bento script allows users to start and stop the HDFS, HBase,
+#   and MapReduce clusters managed by bento-cluster. For full usage information,
+#   use:
+#
+#   bash> $BENTO_CLUSTER_HOME/bin/bento help
+#
+
+# Canonicalize a path into an absolute, symlink free path.
+#
+# Portable implementation of the GNU coreutils "readlink -f path".
+# The '-f' option of readlink does not exist on MacOS, for instance.
+#
+# Args:
+#   param $1: path to canonicalize.
+# Returns:
+#   Prints the canonicalized path on stdout.
+function resolve_symlink() {
+  TARGET_FILE=$1
+
+  if [ -z "$TARGET_FILE" ]; then
+    echo ""
+    return 0
+  fi
+
+  cd $(dirname "$TARGET_FILE")
+  TARGET_FILE=$(basename "$TARGET_FILE")
+
+  # Iterate down a (possible) chain of symlinks
+  count=0
+  while [ -L "$TARGET_FILE" ]; do
+      if [ "$count" -gt 1000 ]; then
+        # Just stop here, we've hit 1,000 recursive symlinks. (cycle?)
+        break
+      fi
+
+      TARGET_FILE=$(readlink "$TARGET_FILE")
+      cd $(dirname "$TARGET_FILE")
+      TARGET_FILE=$(basename "$TARGET_FILE")
+      count=$(( $count + 1 ))
+  done
+
+  # Compute the canonicalized name by finding the physical path
+  # for the directory we're in and appending the target file.
+  PHYS_DIR=$(pwd -P)
+  RESULT="$PHYS_DIR/$TARGET_FILE"
+  echo "$RESULT"
+}
+
+prgm="$0"
+prgm=`resolve_symlink "$prgm"`
+bin=`dirname "$prgm"`
+bin=`cd "${bin}" && pwd`
+
+# Configure the environment to use the distributions managed by bento-cluster.
+source "${bin}/bento-env.sh" &> /dev/null
+
+# Any extra jars you want to be on the classpath of the started clusters can be
+# specified here.
+BENTO_CLASSPATH=${BENTO_CLASSPATH:-""}
+
+# Any arguments you want to pass to the bento-cluster jvm can be specified here.
+BENTO_JAVA_OPTS=${BENTO_JAVA_OPTS:-""}
+
+# An existing set of directories to use for the java.library.path property should
+# be set with JAVA_LIBRARY_PATH.
+JAVA_LIBRARY_PATH=${JAVA_LIBRARY_PATH:-""}
+
+# The directory that holds cluster state.
+STATE_DIR="$BENTO_CLUSTER_HOME/state"
+# Locations of log and pid files.
+BENTO_LOG_FILE="${STATE_DIR}/bento-cluster.log"
+BENTO_PID_FILE="${STATE_DIR}/bento-cluster.pid"
+
+# By default, Bento logs are discarded
+BENTO_LOG_ENABLE=${BENTO_LOG_ENABLE:-0}
+
+# A directory containing symlinks to the -site.xml files used by bento-cluster's
+# Hadoop clusters.
+CLUSTER_CONF_DIR="${BENTO_CLUSTER_HOME}/cluster-conf"
+
+java_opts=
+
+function print_tool_usage() {
+  echo "The bento script can start and stop the HDFS, MapReduce, and HBase clusters"
+  echo "managed by bento-cluster."
+  echo
+  echo "USAGE"
+  echo
+  echo "  bento (start|stop)"
+  echo
+  echo "COMMANDS"
+  echo
+  echo "  help          - Displays this help message. Use --verbose for more information."
+  echo "  start         - Starts HDFS, MapReduce, and HBase clusters managed by bento-cluster."
+  echo "  stop          - Stops HDFS, MapReduce, and HBase clusters managed by bento-cluster."
+  echo "  config        - Configures the ports used by bento-cluster."
+  echo "  classpath     - Prints the classpath used to run bento-cluster."
+  echo "  import        - Imports data from an existing BentoBox or bento-cluster."
+  echo "  upgrade       - Downloads the latest BentoBox and upgrades this instance."
+  echo
+  echo "FLAGS"
+  echo "  The config command can take some command-line flags.  Use bento config --help"
+  echo "  for more information."
+}
+
+function print_env_usage() {
+  echo
+  echo "ENVIRONMENT VARIABLES"
+  echo
+  echo "  Users can set several environment variables to change the behavior of the bento script and"
+  echo "  the clusters managed by bento-cluster. These include:"
+  echo
+  echo "  BENTO_CLASSPATH     Should contain a colon-seperated list of paths to client libraries"
+  echo "                      to place on the classpath of the clusters run. This is useful when"
+  echo "                      you want to make libraries available to all code run on the clusters"
+  echo "                      (such as in MapReduce tasks). The libraries specified in"
+  echo "                      BENTO_CLASSPATH will be placed first on the classpath so that they"
+  echo "                      will take precedence over libraries provided by bento-cluster."
+  echo "                      By default BENTO_CLASSPATH is empty."
+  echo
+  echo "  BENTO_JAVA_OPTS     Should contain extra arguments to pass to the JVM used to run"
+  echo "                      bento-cluster. By default, BENTO_JAVA_OPTS is empty."
+  echo
+  echo "  JAVA_LIBRARY_PATH   Should contain a colon-seperated list of paths to additional native"
+  echo "                      libraries to pass to the JVM (through the java.library.path"
+  echo "                      property). Note the bento script will always pass the native libraries"
+  echo "                      included with bento-cluster's Hadoop distribution to the JVM. By"
+  echo "                      default JAVA_LIBRARY_PATH is empty."
+  echo
+  echo "  BENTO_LOG_ENABLE    Set to 1 to capture the bento-cluster log messages into a log file."
+  echo "                      By default, bento-cluster logs are discarded."
+  echo "                      Note that bento-cluster features NO automatic log rolling, and that"
+  echo "                      the bento log file may grow to hard-drive-filling sizes if the cluster"
+  echo "                      emits many log messages."
+  echo "                      In particular, suspending the local machine while bento-cluster is"
+  echo "                      running will result in a high rate of error messages being written"
+  echo "                      to the bento log file once the machine resumes."
+}
+
+if [ -z $1 ]; then
+    print_tool_usage
+    exit 0
+fi
+
+function create_missing_dir() {
+  dirname=$1
+
+  # Create the directory identified if it does not exist already.
+  if [ ! -z "$dirname" -a ! -d "$dirname" ]; then
+    if [ -e "$dirname" ]; then
+      echo "Warning: $dirname exists but is not a directory"
+      return 1
+    fi
+    mkdir -p $dirname
+  fi
+}
+
+# Removes classpath entries that match the given regexp (partial match, not full
+# match).
+function remove_classpath_entries() {
+  local cp=$1
+  local regex=$2
+
+  echo $cp | sed "s/[^:]*$regex[^:]*/::/g" | sed 's/::*/:/g'
+  return 0
+}
+
+# Helper to build classpaths correctly
+function append_path() {
+  if [ -z "$1" ]; then
+    echo $2
+  else
+    echo $1:$2
+  fi
+}
+
+# Scrubs classpaths of a given jar. Mutate will dig into *s, only mutating them
+# if it finds the given jar.
+# mutate_classpath scrubme.jar "$(hadoop classpath)"
+function mutate_classpath () {
+
+    local mutated_classpath
+    local jar_to_scrub=$1
+    shift
+
+    # Stop expanding globs
+    set -f
+    IFS=: read -r -a classpath <<< $@
+
+    for path in $classpath; do
+
+        # If it ends with a glob we'll need to dig deeper for jars
+        if [ "${path: -1:1}" = "*" ]; then
+
+            set +f
+            local expanded_classpath=$(JARS=(${path}.jar); IFS=:; echo "${JARS[*]}")
+            set -f
+
+            # If the expanded classpath contains the jar in question, we'll
+            # scrub it later.
+            if [[ $expanded_classpath =~ .*$jar_to_scrub.* ]]; then
+                mutated_classpath=$(append_path $mutated_classpath $expanded_classpath)
+
+            # If the expanded classpath doesn't contain the jar in question, use
+            # the glob version to reduce clutter.
+            else
+                mutated_classpath=$(append_path $mutated_classpath $path)
+            fi
+
+        # No glob just use the path
+        else
+            mutated_classpath=$(append_path $mutated_classpath $path)
+        fi
+    done
+
+    # Scrub all instances of the jar
+    mutated_classpath=$(remove_classpath_entries "$mutated_classpath" "$jar_to_scrub")
+    echo $mutated_classpath
+
+    set +f
+}
+
+function check_host_configuration() {
+  # Check if the IP address of the local machine can be resolved.
+  # Skip this check on Mac OS X as it does not behave correctly on Mac systems,
+  # and the check is primarily made to detect a problem on Ubuntu.
+  if [ `uname` != "Darwin" ]; then
+    java -cp "$bento_cp" $java_opts $BENTO_JAVA_OPTS \
+      org.kiji.bento.tools.DNSCheckingTool "--hostname=$(hostname)"
+
+    if [[ "$?" != "0" ]]; then
+      echo "Local DNS check failed.  Please resolve and try again."
+      exit 1
+    fi
+  fi
+}
+
+# This function waits until bento-cluster's PID file is present. The PID file is written by
+# the MiniClusterTool after clusters have been started.
+function wait_bento_started() {
+  echo "Waiting for clusters to start..."
+  tries=30
+  while [ "$tries" -gt 0 ]; do
+    tries=$(($tries - 1))
+    if [ -e "${BENTO_PID_FILE}" ]; then
+      break
+    fi
+    sleep 2
+  done
+  if [ -e "${BENTO_PID_FILE}" ]; then
+    echo "bento-cluster started."
+    return 0
+  else
+    echo "Waiting for bento-cluster to start timed out after 60 seconds!"
+    return 1
+  fi
+}
+
+function status_bento() {
+  # Report the bento's status (running or stopped) on stdout and via exit code
+  # (status=0 for running, 1 for not running).
+
+  pidfile="$1"
+  if [ -z "$pidfile" ]; then
+    echo "Error: No PID file specified as argument to status_bento()."
+    return 1
+  fi
+
+  printf "%s" "bento-cluster: "
+
+  if [ -f "$pidfile" ]; then
+      PID=$(cat "$pidfile")
+      if [ -z "$(ps axo pid,command| grep ${PID} | grep -v grep)" ]; then
+          echo "Process dead but pidfile exists."
+          echo "You can remove it here: ${pidfile}."
+          return 1
+      else
+          echo "Running as ${PID}."
+          return 0
+      fi
+  else
+      echo "Not running."
+      return 1
+  fi
+}
+
+function upgrade_tool() {
+  # Launch the upgrade
+  status_bento "${BENTO_PID_FILE}" &> /dev/null
+  running=$?
+  if [ "$running" == 0 ]; then
+    echo ""
+    echo "This BentoBox cluster is running."
+    echo "Stop it with the 'bento stop' command first."
+    return 1
+  fi
+
+  # If this is in a BentoBox, it should be at BENTO_HOME/cluster/bin. Look
+  # for BENTO_HOME/bin/upgrade-installer.sh and run it if available.
+  upgrade_tool="${bin}/upgrade-installer.sh"
+  if [ -x "$upgrade_tool" -a -f "$upgrade_tool" ]; then
+    "$upgrade_tool" "$@"
+    return $?
+  else
+    echo ""
+    echo "This 'bento' script does not seem to be inside a BentoBox."
+    echo "Cannot run an automatic upgrade. See www.kiji.org for downloads."
+    return 1
+  fi
+}
+
+function import_tool() {
+  # Run the import script to import the cluster state from an existing instance.
+  # This tool exits with status 0 on success, 1 on error.
+  # This tool takes as its sole argument the path to the source BentoBox or
+  # bento-cluster instance.
+
+  srcarg="$1"
+
+  # Parse the first argument.
+  # The 'cut(1)' command is specified by POSIX.1.
+  if [ -z "$srcarg" ]; then
+    # No arguments: print usage.
+    echo "Usage: bento import --src=</path/to/previous/bentobox>"
+    echo ""
+    echo "Import the data from an existing BentoBox into this instance."
+    return 1
+  elif [ `echo "$srcarg" | cut -c 1-6` == "--src=" ]; then
+    # $srcbox defines the path to the source BentoBox or bento-cluster.
+    srcbox=`echo "$srcarg" | cut -c 7-`
+  else
+    # The argument is --foo=... and we only support --src.
+    echo "The only argument allowed is 'bento import --src=<path>'."
+    return 1
+  fi
+
+  if [ -z "$srcbox" ]; then
+    echo "Must specify a source BentoBox path."
+    echo "bento import --src=/path/to/source/bentobox"
+    return 1
+  fi
+
+  echo "Importing from $srcbox"
+  if [ ! -d "$srcbox" ]; then
+    echo "Error: Cannot find source BentoBox."
+    return 1
+  fi
+
+  # Search for the actual state dir.
+  if [ -d "$srcbox/cluster/state" ]; then
+    # It's nested in a BentoBox.
+    statedir="$srcbox/cluster/state"
+  elif [ -d "$srcbox/state" ]; then
+    # Standalone bento cluster.
+    statedir="$srcbox/state"
+  fi
+
+  if [ -z "$statedir" ]; then
+    echo "Could not find any state directory in the existing BentoBox."
+    echo "No data to import."
+    return 1
+  fi
+
+  # Check to see if the source cluster's running.
+  status_bento "$statedir/bento-cluster.pid" &> /dev/null
+  srcstart=$?
+  if [ "$srcstart" == 0 ]; then
+    echo ""
+    echo "Source cluster is running. Stop it with:"
+    echo "  source $srcbox/bin/kiji-env.sh"
+    echo "  bento stop"
+    return 1
+  fi
+
+  # Check to see if the destination cluster's running.
+  status_bento "${BENTO_PID_FILE}" &> /dev/null
+  deststart=$?
+  if [ "$deststart" == 0 ]; then
+    echo ""
+    echo "Destination cluster is running."
+    echo "Stop it with the 'bento stop' command first."
+    return 1
+  fi
+
+  if [ ! -d "$BENTO_CLUSTER_HOME" ]; then
+    # Sanity check the destination cluster exists; this shouldn't be triggered.
+    echo "The destination BentoBox (this one?) doesn't seem to exist."
+    echo "Cannot find directory for BENTO_CLUSTER_HOME: $BENTO_CLUSTER_HOME"
+    return 1
+  fi
+
+  dest="$BENTO_CLUSTER_HOME/state"
+  if [ -d "$dest" ]; then
+    echo "Destination directory exists:"
+    echo "$dest"
+    echo ""
+    echo "It must be removed or moved aside before importing from another instance."
+    echo ""
+    echo "Shall I delete all destination cluster data? (Type 'yes' or 'no')"
+    read -e -p "> " rmconf
+    if [ "$rmconf" == "yes" ]; then
+      rm -rf "$dest"
+    elif [ "$rmconf" == "no" ]; then
+      echo "Not removing destination data. Canceling import."
+      return 1
+    else
+      echo "Must type 'yes' to proceed (or remove destination data yourself first)."
+      return 1
+    fi
+  fi
+
+  # Ensure that src and dest are different.
+  if [ `resolve_symlink "$statedir"` == `resolve_symlink "$dest"` ]; then
+    echo "Error: Source and destination clusters are the same."
+    return 1
+  fi
+
+  # Everything seems in order. Perform the copy.
+  cp -a "$statedir" "$dest"
+  cpok=$?
+  if [ "$cpok" == 0 ]; then
+    echo "Import complete! Type 'bento start' to start the new minicluster."
+  fi
+  return $cpok # Success.
+}
+
+function kill_bento() {
+  # Get the cassandra pid
+  echo "Shutting down Cassandra..."
+  CPID=`jps | grep Cassandra | cut -f 1 -d ' '`
+  kill $CPID
+
+  # Kill a running bento-cluster process from its pid file.
+  if [ ! -f "${BENTO_PID_FILE}" ]; then
+    echo "Cannot find pid file. Is bento-cluster running?"
+    return 1
+  fi
+  PID=`cat ${BENTO_PID_FILE}`
+  if [ -z "$PID" ]; then
+    echo "No PID in pid file? Cannot stop bento-cluster."
+    return 1
+  fi
+  echo "Stopping bento-cluster..."
+  kill $PID
+  ret=$?
+  if [ "$ret" != "0" ]; then
+    echo "Error killing process with pid $PID"
+    return 1
+  fi
+  echo "Waiting for shutdown..."
+  tries=30
+  while [ "$tries" -gt 0 ]; do
+    tries=$(($tries - 1))
+    ps -e -o pid,args | grep "^$PID" 2>&1 > /dev/null
+    ret=$?
+    if [ "$ret" != 0 ]; then
+      break
+    fi
+    sleep 2
+  done
+  ps e | grep "^$PID" 2>&1 > /dev/null
+  ret=$?
+  if [ "$ret" == 0 ]; then
+    echo "Kill signal sent but waiting for bento-cluster to stop timed out after 60 seconds!."
+    return 1
+  fi
+  # bento-cluster will delete its own pid file.
+  echo "bento-cluster shutdown."
+  return 0
+}
+
+
+# Gather the bento-cluster dependency jars.
+libjars=
+for jar in `ls $BENTO_CLUSTER_HOME/lib/*.jar`; do
+    libjars=$libjars:$jar
+done
+
+# Gather the HBase classpath.
+hbase_cp=$($HBASE_HOME/bin/hbase classpath)
+hbase_cp=$(mutate_classpath 'slf4j-log4j12' "$hbase_cp")
+
+# Hadoop classpath
+hadoop_cp=$($HADOOP_HOME/bin/hadoop classpath)
+hadoop_cp=$(mutate_classpath 'slf4j-log4j12' "$hadoop_cp")
+
+# Note that we put the libjars before the hbase jars, in case there are conflicts.
+bento_conf=$BENTO_CLUSTER_HOME/conf
+bento_jar=$BENTO_CLUSTER_HOME/lib/bento-cluster-1.2.3.jar
+# We put $BENTO_CLASSPATH at the beginning classpath to allow users to win when there are conflicts.
+bento_cp="$BENTO_CLASSPATH:$bento_conf:$bento_jar:$libjars:$hadoop_cp:$hbase_cp"
+
+# Determine location of Hadoop native libraries and set java.library.path.
+if [ -d "${HADOOP_HOME}/lib/native" ]; then
+  JAVA_PLATFORM=`java -cp ${hadoop_cp} -Xmx32m org.apache.hadoop.util.PlatformName | sed -e "s/ /_/g"`
+  if [ ! -z "$JAVA_LIBRARY_PATH" ]; then
+    JAVA_LIBRARY_PATH="${JAVA_LIBRARY_PATH}:${HADOOP_HOME}/lib/native/${JAVA_PLATFORM}"
+  else
+    JAVA_LIBRARY_PATH="${HADOOP_HOME}/lib/native/${JAVA_PLATFORM}"
+  fi
+fi
+
+command=$1
+shift  # pop off the command
+
+maybeDebugMode=$1
+debugMode="no"
+if [ "$maybeDebugMode" == "--debug" -o "$maybeDebugMode" == "-d" ]; then
+  # Consume the "--debug" token, and set the logging level for
+  # the underlying command.
+  java_opts="-Dbento.logger=DEBUG,console"
+  debugMode="yes"
+  shift
+fi
+
+run_config=false
+found_cmd=false
+start_cluster=false
+case $command in
+  help)
+    print_tool_usage
+    if [[ $1 == "--verbose" ]]; then
+      print_env_usage
+    fi
+    exit 0
+    ;;
+  start)
+    start_cluster=true
+    if [ ! -f "$HADOOP_HOME/conf/core-site.xml" ]; then
+      run_config=true
+    fi
+    found_cmd=true
+    ;;
+  stop)
+    # If running in a Kiji BentoBox, stop the upgrade checking daemon.
+    upgrade_daemon_stop_script="${bin}/upgrade-daemon-stop.sh"
+    if [ -f "${upgrade_daemon_stop_script}" -a -x "${upgrade_daemon_stop_script}" ]; then
+      "${upgrade_daemon_stop_script}"
+    fi
+    # Kill cluster daemon.
+    kill_bento
+    exit $?
+    ;;
+  config)
+    run_config=true
+    found_cmd=true
+    ;;
+  status)
+    status_bento "${BENTO_PID_FILE}"
+    exit $?
+    ;;
+  import)
+    import_tool "$@"
+    exit $?
+    ;;
+  upgrade)
+    upgrade_tool "$@"
+    exit $?
+    ;;
+  classpath)
+    echo "$bento_cp"
+    exit 0
+    ;;
+esac
+
+if ! $found_cmd ; then
+    echo "Unknown command: $command"
+    echo "Try:"
+    echo "  bento help"
+    exit 1
+fi
+
+export BENTO_JAVA_OPTS
+
+if [ ! -z "$JAVA_LIBRARY_PATH" ]; then
+  java_opts="$java_opts -Djava.library.path=$JAVA_LIBRARY_PATH"
+fi
+
+# If it does not exist, create the cluster state dir.
+create_missing_dir "${STATE_DIR}"
+
+# Before running the command, generate a UUID to use with the upgrade check-in server,
+# if we are running inside a Kiji BentoBox. We know we're running in a Kiji BentoBox
+# if the UUID generation script exists.
+uuid_script="${bin}/generate-uuid.sh"
+if [ -f "${uuid_script}" -a -x "${uuid_script}" ]; then
+  "${uuid_script}"
+fi
+
+# If required or requested, run the port configuration tool.
+if $run_config ; then
+  if [ -e "${BENTO_PID_FILE}" ]; then
+    echo "PID file exists at ${BENTO_PID_FILE}"
+    echo "Stop bento-cluster or remove stale PID file before running port configuration utility."
+    exit 1
+  fi
+  echo "Running bento-cluster port configuration utility."
+  echo
+  class=org.kiji.bento.tools.ConfigurationSetupTool
+  class_args="$@ --hadoop-conf-dir=${HADOOP_HOME}/conf --hbase-conf-dir=${HBASE_HOME}/conf"
+  java -cp "$bento_cp" $java_opts $BENTO_JAVA_OPTS $class $class_args
+  if [ ! -d "${CLUSTER_CONF_DIR}" ]; then
+    create_missing_dir "${CLUSTER_CONF_DIR}"
+    ln -s ${HADOOP_HOME}/conf/core-site.xml ${CLUSTER_CONF_DIR}/core-site.xml
+    ln -s ${HADOOP_HOME}/conf/mapred-site.xml ${CLUSTER_CONF_DIR}/mapred-site.xml
+    ln -s ${HADOOP_HOME}/conf/hdfs-site.xml ${CLUSTER_CONF_DIR}/hdfs-site.xml
+    ln -s ${HBASE_HOME}/conf/hbase-site.xml ${CLUSTER_CONF_DIR}/hbase-site.xml
+  fi
+  echo
+  check_host_configuration
+fi
+
+# Start the mini cluster.
+if $start_cluster ; then
+  # Check if bento-cluster is already running.
+  if [ -e "${BENTO_PID_FILE}" ]; then
+    echo "PID file already exists at ${BENTO_PID_FILE}"
+    echo "Stop bento-cluster or remove stale PID file before trying to start cluster again."
+    exit 1
+  fi
+
+  check_host_configuration
+
+  # Check if bento-cluster's ports are open.
+  java -cp "$bento_cp" $java_opts $BENTO_JAVA_OPTS org.kiji.bento.tools.PortCheckingTool
+  if [[ "$?" != "0" ]]; then
+    echo "Port check failed. Not starting bento-cluster."
+    exit 1
+  fi
+
+  # If we're running inside a Kiji BentoBox, start a background daemon that checks for
+  # BentoBox upgrades.
+  upgrade_daemon_start_script="${bin}/upgrade-daemon-start.sh"
+  if [ -f "${upgrade_daemon_start_script}" -a -x "${upgrade_daemon_start_script}" ]; then
+    "${upgrade_daemon_start_script}"
+  fi
+
+  
+  # Start Cassandra
+  echo "Starting cassandra..."
+  cd "${BENTO_CLUSTER_HOME}"
+  ../cassandra/bin/cassandra
+
+  echo "Starting bento-cluster..." 
+
+  class=org.kiji.bento.tools.MiniClusterTool
+  class_args="--state-dir=${STATE_DIR}"
+  cd "${STATE_DIR}"
+
+  if [ ${BENTO_LOG_ENABLE} -ne 1 ]; then
+    # Logging is disabled, discard logs through /dev/null:
+    BENTO_LOG_FILE="/dev/null"
+  fi
+  nohup java -cp "$bento_cp" $java_opts $BENTO_JAVA_OPTS $class $class_args "$@" \
+      &> "${BENTO_LOG_FILE}" &
+  wait_bento_started
+fi
+
+# Save the exit value of the last command run (cluster config or cluster start).
+config_or_start_success=$?
+
+# If cluster config or start was successful, report on the ports in use.
+if [[ "$config_or_start_success" == "0" ]]; then
+  java -cp "$bento_cp" $java_opts $BENTO_JAVA_OPTS org.kiji.bento.tools.PortReportingTool
+fi
+
+exit $config_or_start_success
+

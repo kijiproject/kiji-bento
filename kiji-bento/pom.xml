@@ -193,14 +193,6 @@
       <type>tar.gz</type>
     </dependency>
     <dependency>
-      <!-- This is packed into lib/profiling/ in its own dependencySet by assembly:single -->
-      <!-- See src/main/assembly/release.xml. -->
-      <groupId>org.kiji.schema</groupId>
-      <artifactId>kiji-schema-profiling</artifactId>
-      <version>${kiji-schema.version}</version>
-      <type>jar</type>
-    </dependency>
-    <dependency>
       <!-- This is a dependency for the profiling system and will be moved along with -->
       <!-- kiji-schema's profiling version above. See src/main/assembly/release.xml. -->
       <groupId>org.aspectj</groupId>
@@ -211,6 +203,13 @@
     <dependency>
       <groupId>org.kiji.schema</groupId>
       <artifactId>kiji-schema</artifactId>
+      <version>${kiji-schema.version}</version>
+      <classifier>release</classifier>
+      <type>tar.gz</type>
+    </dependency>
+    <dependency>
+      <groupId>org.kiji.schema</groupId>
+      <artifactId>kiji-schema-cassandra</artifactId>
       <version>${kiji-schema.version}</version>
       <classifier>release</classifier>
       <type>tar.gz</type>
@@ -230,16 +229,15 @@
       <type>tar.gz</type>
     </dependency>
     <dependency>
-      <!-- This is packed into lib/profiling/ in its own dependencySet by assembly:single -->
-      <!-- See src/main/assembly/release.xml. -->
       <groupId>org.kiji.mapreduce</groupId>
-      <artifactId>kiji-mapreduce-profiling</artifactId>
+      <artifactId>kiji-mapreduce</artifactId>
       <version>${kiji-mapreduce.version}</version>
-      <type>jar</type>
+      <classifier>release</classifier>
+      <type>tar.gz</type>
     </dependency>
     <dependency>
       <groupId>org.kiji.mapreduce</groupId>
-      <artifactId>kiji-mapreduce</artifactId>
+      <artifactId>kiji-mapreduce-cassandra</artifactId>
       <version>${kiji-mapreduce.version}</version>
       <classifier>release</classifier>
       <type>tar.gz</type>
@@ -291,6 +289,13 @@
       <artifactId>bento-checkin</artifactId>
       <version>${project.version}</version>
       <classifier>release</classifier>
+      <type>tar.gz</type>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>apache-cassandra</artifactId>
+      <version>${cassandra.version}</version>
+      <classifier>bin</classifier>
       <type>tar.gz</type>
     </dependency>
   </dependencies>

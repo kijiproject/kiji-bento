@@ -33,6 +33,53 @@
   <baseDirectory>kiji-bento-${codename}</baseDirectory>
 
   <fileSets>
+    <!-- Copy over the entire Cassandra distribution -->
+    <fileSet>
+      <outputDirectory>cassandra</outputDirectory>
+      <directory>target/prereqs-dir/apache-cassandra-${cassandra.version}</directory>
+      <fileMode>0755</fileMode>
+      <includes>
+        <include>bin/**</include>
+      </includes>
+    </fileSet>
+    <fileSet>
+      <outputDirectory>cassandra</outputDirectory>
+      <directory>target/prereqs-dir/apache-cassandra-${cassandra.version}</directory>
+      <fileMode>0644</fileMode>
+      <excludes>
+        <exclude>bin/**</exclude>
+        <!--Get this from our custom version-->
+        <exclude>conf/cassandra.yaml</exclude>
+      </excludes>
+    </fileSet>
+
+    <!-- Copy the Cassandra scripts to a Cassandra directory. -->
+    <fileSet>
+      <outputDirectory>cassandra/conf</outputDirectory>
+      <fileMode>0644</fileMode>
+      <directory>src/main/scripts/cassandra/conf</directory>
+      <!--<excludes>-->
+      <!--<exclude>**/bin/**</exclude>-->
+      <!--</excludes>-->
+    </fileSet>
+    <!--<fileSet>-->
+    <!--<outputDirectory>cassandra</outputDirectory>-->
+    <!--<fileMode>0755</fileMode>-->
+    <!--<directory>src/main/scripts/cassandra</directory>-->
+    <!--<includes>-->
+    <!--<include>**/bin/**</include>-->
+    <!--</includes>-->
+    <!--</fileSet>-->
+    <!-- Copy the script to start the Cassandra Bento cluster. -->
+    <fileSet>
+      <outputDirectory>cluster/bin</outputDirectory>
+      <fileMode>0755</fileMode>
+      <directory>src/main/scripts</directory>
+      <includes>
+        <include>cassandra-bento</include>
+      </includes>
+    </fileSet>
+
     <fileSet>
       <!-- Put version info in the top-level directory. -->
       <outputDirectory></outputDirectory>
@@ -77,6 +124,10 @@
         <exclude>bin/**</exclude>
         <exclude>RELEASE_NOTES.txt</exclude>
         <exclude>docs/**</exclude>
+        <exclude>**/guava-14*</exclude>
+        <!--Cassandra needs latest version of netty on classpath.-->
+        <exclude>**/netty-3.4.0*</exclude>
+        <exclude>**/netty-3.2.2*</exclude>
       </excludes>
       <filtered>false</filtered>
       <fileMode>0644</fileMode>
@@ -94,17 +145,6 @@
       <fileMode>0755</fileMode>
     </fileSet>
     <fileSet>
-      <!-- kiji-schema profiling binaries go in $KIJI_HOME/bin/profiling/ -->
-      <useDefaultExcludes>false</useDefaultExcludes>
-      <outputDirectory>bin/profiling</outputDirectory>
-      <directory>target/prereqs-dir/kiji-schema-${kiji-schema.version}/bin</directory>
-      <includes>
-        <include>*-profiling.sh</include>
-      </includes>
-      <filtered>false</filtered>
-      <fileMode>0755</fileMode>
-    </fileSet>
-    <fileSet>
       <!-- kiji-schema api docs -->
       <useDefaultExcludes>false</useDefaultExcludes>
       <outputDirectory>docs/kiji-schema</outputDirectory>
@@ -112,6 +152,33 @@
       <filtered>false</filtered>
       <fileMode>0644</fileMode>
     </fileSet>
+
+    <!--Cassandra Kiji Schema -->
+    <fileSet>
+      <!-- kiji-schema -->
+      <useDefaultExcludes>false</useDefaultExcludes>
+      <outputDirectory>.</outputDirectory>
+      <directory>target/prereqs-dir/kiji-schema-cassandra-${kiji-schema.version}</directory>
+      <excludes>
+        <exclude>bin/**</exclude>
+        <exclude>RELEASE_NOTES.txt</exclude>
+        <exclude>docs/**</exclude>
+        <exclude>**/netty-3.4.0*</exclude>
+        <exclude>**/netty-3.2.2*</exclude>
+      </excludes>
+      <filtered>false</filtered>
+      <fileMode>0644</fileMode>
+    </fileSet>
+    <fileSet>
+      <!-- kiji-schema api docs -->
+      <useDefaultExcludes>false</useDefaultExcludes>
+      <outputDirectory>docs/kiji-schema-cassandra</outputDirectory>
+      <directory>target/prereqs-dir/kiji-schema-cassandra-${kiji-schema.version}/docs</directory>
+      <filtered>false</filtered>
+      <fileMode>0644</fileMode>
+    </fileSet>
+
+
     <fileSet>
       <!-- kiji-schema-shell -->
       <useDefaultExcludes>false</useDefaultExcludes>
@@ -216,7 +283,8 @@
       <!-- kiji-express-examples -->
       <useDefaultExcludes>false</useDefaultExcludes>
       <outputDirectory>examples/express-examples</outputDirectory>
-      <directory>target/prereqs-dir/kiji-express-examples-${kiji-express-examples.version}</directory>
+      <directory>target/prereqs-dir/kiji-express-examples-${kiji-express-examples.version}
+      </directory>
       <filtered>false</filtered>
       <fileMode>0644</fileMode>
     </fileSet>
@@ -231,6 +299,8 @@
            bulk copied in the next section. -->
       <excludes>
         <exclude>**/bin/**</exclude>
+        <!--Guava 14 does not play well with Cassandra-->
+        <exclude>**/guava-14*</exclude>
       </excludes>
     </fileSet>
     <fileSet>
@@ -252,17 +322,11 @@
       <excludes>
         <exclude>RELEASE_NOTES.txt</exclude>
         <exclude>docs/**</exclude>
+        <!--Guava 14 does not play well with Cassandra-->
+        <exclude>**/guava-14*</exclude>
       </excludes>
       <filtered>false</filtered>
       <fileMode>0644</fileMode>
-    </fileSet>
-    <fileSet>
-      <!-- KijiMR profiling binaries -->
-      <useDefaultExcludes>false</useDefaultExcludes>
-      <outputDirectory>bin/profiling</outputDirectory>
-      <directory>target/prereqs-dir/kiji-mapreduce-${kiji-mapreduce.version}/bin/profiling</directory>
-      <filtered>false</filtered>
-      <fileMode>755</fileMode>
     </fileSet>
     <fileSet>
       <!-- kiji-mapreduce api docs -->
@@ -272,6 +336,31 @@
       <filtered>false</filtered>
       <fileMode>0644</fileMode>
     </fileSet>
+
+    <!-- Cassandra stuff! -->
+    <fileSet>
+      <!-- Cassandra version of kiji-mapreduce -->
+      <useDefaultExcludes>false</useDefaultExcludes>
+      <outputDirectory>.</outputDirectory>
+      <directory>target/prereqs-dir/kiji-mapreduce-cassandra-${kiji-mapreduce.version}</directory>
+      <excludes>
+        <exclude>RELEASE_NOTES.txt</exclude>
+        <exclude>docs/**</exclude>
+        <exclude>**/guava-14*</exclude>
+      </excludes>
+      <filtered>false</filtered>
+      <fileMode>0644</fileMode>
+    </fileSet>
+    <fileSet>
+      <!-- Cassandra kiji-mapreduce api docs -->
+      <useDefaultExcludes>false</useDefaultExcludes>
+      <outputDirectory>docs/kiji-mapreduce-cassandra</outputDirectory>
+      <directory>target/prereqs-dir/kiji-mapreduce-cassandra-${kiji-mapreduce.version}/docs
+      </directory>
+      <filtered>false</filtered>
+      <fileMode>0644</fileMode>
+    </fileSet>
+
     <fileSet>
       <!-- kiji-mapreduce-lib -->
       <useDefaultExcludes>false</useDefaultExcludes>
@@ -280,6 +369,7 @@
       <excludes>
         <exclude>RELEASE_NOTES.txt</exclude>
         <exclude>docs/**</exclude>
+        <exclude>**/guava-14*</exclude>
       </excludes>
       <filtered>false</filtered>
       <fileMode>0644</fileMode>
@@ -288,7 +378,8 @@
       <!-- kiji-mapreduce-lib api docs -->
       <useDefaultExcludes>false</useDefaultExcludes>
       <outputDirectory>docs/kiji-mapreduce-lib</outputDirectory>
-      <directory>target/prereqs-dir/kiji-mapreduce-lib-${kiji-mapreduce-lib.version}/docs</directory>
+      <directory>target/prereqs-dir/kiji-mapreduce-lib-${kiji-mapreduce-lib.version}/docs
+      </directory>
       <filtered>false</filtered>
       <fileMode>0644</fileMode>
     </fileSet>
@@ -357,6 +448,7 @@
       <directory>target/prereqs-dir/bento-checkin-${project.version}</directory>
       <excludes>
         <exclude>bin/**</exclude>
+        <exclude>**/guava-14*</exclude>
       </excludes>
       <filtered>false</filtered>
       <fileMode>0644</fileMode>
@@ -407,7 +499,8 @@
     </file>
     <file>
       <!-- kiji-schema-shell release notes -->
-      <source>target/prereqs-dir/kiji-schema-shell-${kiji-schema-shell.version}/RELEASE_NOTES.txt</source>
+      <source>target/prereqs-dir/kiji-schema-shell-${kiji-schema-shell.version}/RELEASE_NOTES.txt
+      </source>
       <outputDirectory>release-notes</outputDirectory>
       <destName>DDL_RELEASE_NOTES.txt</destName>
       <fileMode>0644</fileMode>
@@ -421,7 +514,9 @@
     </file>
     <file>
       <!-- kijiMR lib release notes -->
-      <source>target/prereqs-dir/kiji-mapreduce-lib-${kiji-mapreduce-lib.version}/RELEASE_NOTES.txt</source>
+      <source>
+        target/prereqs-dir/kiji-mapreduce-lib-${kiji-mapreduce-lib.version}/RELEASE_NOTES.txt
+      </source>
       <outputDirectory>release-notes</outputDirectory>
       <destName>MRLIB_RELEASE_NOTES.txt</destName>
       <fileMode>0644</fileMode>
@@ -452,11 +547,14 @@
     <!-- BENTO-51: Include KijiSchema / KijiMR jars specially-compiled w/ profiling aspects. -->
     <dependencySet>
       <outputDirectory>lib/profiling</outputDirectory>
-      <outputFileNameMapping>${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}</outputFileNameMapping>
+      <outputFileNameMapping>
+        ${artifact.artifactId}-${artifact.baseVersion}${dashClassifier?}.${artifact.extension}
+      </outputFileNameMapping>
       <fileMode>0644</fileMode>
       <includes>
-        <include>org.kiji.schema:kiji-schema-profiling:jar:${kiji-schema.version}</include>
-        <include>org.kiji.mapreduce:kiji-mapreduce-profiling:jar:${kiji-mapreduce.version}</include>
+        <include>org.kiji.schema:kiji-schema:jar:profiling:${kiji-schema.version}</include>
+        <include>org.kiji.mapreduce:kiji-mapreduce-hadoop2:jar:profiling:${kiji-mapreduce.version}
+        </include>
         <include>org.aspectj:aspectjrt:jar:${aspectjrt.version}</include>
       </includes>
       <useProjectArtifact>false</useProjectArtifact>
